@@ -1,0 +1,22 @@
+{
+  "name": "@serabi/pokemon-save-reader",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read Pokémon save Pokédex flags locally in a browser worker",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }, "./package.json": "./package.json" },
+  "files": ["dist", "assets", "LICENSE", "README.md", "notices.json"],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node test/browser.mjs"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "4.2.2",
+    "crypto-js": "4.2.0",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  }
+}

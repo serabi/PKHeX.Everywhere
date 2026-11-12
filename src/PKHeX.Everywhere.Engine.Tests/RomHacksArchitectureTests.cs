@@ -10,7 +10,7 @@ public class RomHacksArchitectureTests
     private const string Host = "PKHeX.Everywhere.Engine.Host";
 
     private static bool IsExempt(string name) =>
-        name == RomHacks || name == Host || name.Contains(".Tests") || name.EndsWith(".E2E");
+        name == RomHacks || name == Host || name == "PKHeX.Everywhere.Reader.Host" || name.Contains(".Tests") || name.EndsWith(".E2E");
 
     [Fact]
     public void OnlyTheHostAndTestsReferenceTheRomHacksProject()

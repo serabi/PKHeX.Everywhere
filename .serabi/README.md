@@ -1,8 +1,9 @@
 # Serabi fork
 
 This fork keeps upstream's application and submodule pins intact. The current
-branch adds a plan and Git push protection. It contains no save-reader
-implementation.
+planning branch adds a plan and Git push protection. The implementation branch,
+`serabi/read-only-reader`, adds the separate browser reader described in
+[READER.md](READER.md).
 
 GitHub Actions are disabled on the fork for this planning stage, so publishing
 these documents does not start upstream build or deployment workflows.
