@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <WasmEnableHotReload>false</WasmEnableHotReload>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+        <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <EventSourceSupport>false</EventSourceSupport>
+        <UseSystemResourceKeys>true</UseSystemResourceKeys>
+        <UseSizeOptimizedLinq>true</UseSizeOptimizedLinq>
+        <DebuggerSupport>false</DebuggerSupport>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../PKHeX.Everywhere.Reader/PKHeX.Everywhere.Reader.csproj" />
+        <ProjectReference Include="../PKHeX.Everywhere.RomHacks/PKHeX.Everywhere.RomHacks.csproj" />
+        <Compile Include="../PKHeX.Everywhere.Engine.Host/JsCrypto.cs" Link="JsCrypto.cs" />
+        <Compile Include="../PKHeX.Everywhere.Engine.Host/JsAesProvider.cs" Link="JsAesProvider.cs" />
+        <Compile Include="../PKHeX.Everywhere.Engine.Host/JsMd5Provider.cs" Link="JsMd5Provider.cs" />
+    </ItemGroup>
+</Project>

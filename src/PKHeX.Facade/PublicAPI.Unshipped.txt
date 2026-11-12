@@ -726,3 +726,19 @@ virtual PKHeX.Facade.Pokemons.ExperienceRange.Equals(PKHeX.Facade.Pokemons.Exper
 virtual PKHeX.Facade.Pokemons.ExperienceRange.PrintMembers(System.Text.StringBuilder! builder) -> bool
 PKHeX.Facade.Pokemons.ExperienceRange.ExperienceRange(PKHeX.Facade.Pokemons.ExperienceRange! original) -> void
 PKHeX.Facade.PokemonParty.Members() -> System.Collections.Generic.IEnumerable<(int Slot, PKHeX.Facade.Pokemons.Pokemon! Pokemon)>!
+PKHeX.Facade.Abstractions.IPokedexProvider
+PKHeX.Facade.PokedexSnapshot
+PKHeX.Facade.Abstractions.IPokedexProvider.ReadPokedex(PKHeX.Core.SaveFile! save) -> PKHeX.Facade.PokedexSnapshot!
+PKHeX.Facade.Game.Pokedex.get -> PKHeX.Facade.PokedexSnapshot!
+PKHeX.Facade.PokedexSnapshot.Status.get -> string!
+PKHeX.Facade.PokedexSnapshot.Coverage.get -> string?
+PKHeX.Facade.PokedexSnapshot.SpeciesNamespace.get -> string?
+PKHeX.Facade.PokedexSnapshot.TrackedSpecies.get -> System.Collections.Generic.IReadOnlyList<int>?
+PKHeX.Facade.PokedexSnapshot.SeenSpecies.get -> System.Collections.Generic.IReadOnlyList<int>?
+PKHeX.Facade.PokedexSnapshot.CaughtSpecies.get -> System.Collections.Generic.IReadOnlyList<int>?
+PKHeX.Facade.PokedexSnapshot.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+PKHeX.Facade.PokedexSnapshot.Reason.get -> string?
+static PKHeX.Facade.PokedexSnapshot.Available(System.Collections.Generic.IEnumerable<int>! trackedSpecies, System.Collections.Generic.IEnumerable<int>! seenSpecies, System.Collections.Generic.IEnumerable<int>! caughtSpecies, string! speciesNamespace = "national-dex", string! coverage = "complete", System.Collections.Generic.IEnumerable<string!>? warnings = null) -> PKHeX.Facade.PokedexSnapshot!
+static PKHeX.Facade.PokedexSnapshot.Unavailable(string! reason) -> PKHeX.Facade.PokedexSnapshot!
+PKHeX.Facade.Game.DetectedVersion.get -> PKHeX.Facade.Repositories.GameVersionDefinition!
+PKHeX.Facade.Game.DetectedVersions.get -> System.Collections.Generic.IReadOnlyList<PKHeX.Facade.Repositories.GameVersionDefinition!>!

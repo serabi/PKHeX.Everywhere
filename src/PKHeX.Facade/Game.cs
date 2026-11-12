@@ -11,12 +11,14 @@ namespace PKHeX.Facade;
 public class Game
 {
     public readonly SaveFile SaveFile;
+    private readonly ISaveFormat? _pokedexFormat;
 
     private static readonly FrozenSet<Capability> AllCapabilities = Enum.GetValues<Capability>().ToFrozenSet();
 
     public Game(SaveFile saveFile, ISaveFormat? format = null)
     {
         SaveFile = saveFile;
+        _pokedexFormat = format;
         Format = format is null ? null : new SaveFormatDescription(format.Id, format.Name, format.BaseGame);
         EventLabels = format?.EventLabels;
         Capabilities = format?.Capabilities ?? AllCapabilities;
@@ -66,9 +68,19 @@ public class Game
     public MysteryGiftAlbum? MysteryGifts { get; }
     public GameEvents? Events => _events.Value;
     public Progress Progress => Progress.Of(SaveFile);
+    public PokedexSnapshot Pokedex => PokedexSnapshot.Read(SaveFile, _pokedexFormat);
     public Badges? Badges => Badges.Of(SaveFile);
 
     public GameVersionDefinition SaveVersion => GameVersionRepository.Instance.Get(SaveFile.Version);
+
+    /// <summary>The saved version without PKHeX's default FireRed choice for indistinguishable FRLG files.</summary>
+    public GameVersionDefinition DetectedVersion => GameVersionRepository.Instance.Get(
+        SaveFile is SAV3FRLG && Format is null ? GameVersion.FRLG : SaveFile.Version);
+
+    /// <summary>Individual games compatible with the detected save identity.</summary>
+    public IReadOnlyList<GameVersionDefinition> DetectedVersions => Enum.GetValues<GameVersion>()
+        .Where(version => version.IsValidSavedVersion() && DetectedVersion.Version.Contains(version))
+        .Select(GameVersionRepository.Instance.Get).ToArray();
 
     /**
      * Sometimes it is not really possible to pinpoint which version a save file is

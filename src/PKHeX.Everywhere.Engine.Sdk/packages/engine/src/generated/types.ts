@@ -385,6 +385,26 @@ export interface GameOverview {
   formatId: string | null
 }
 
+/** Saved species flags returned by `game.pokedex`. Unavailable snapshots have no species arrays. */
+export interface GamePokedex {
+  /** Available or unavailable, as lowercase strings. */
+  status: string
+  /** Complete or partial, or null when unavailable. */
+  coverage: string | null
+  /** The id namespace, usually national-dex, or null when unavailable. */
+  speciesNamespace: string | null
+  /** Species whose flags can be read, or null when unavailable. */
+  trackedSpecies: number[] | null
+  /** Species marked seen, or null when unavailable. */
+  seenSpecies: number[] | null
+  /** Species marked caught, including released Pokémon, or null when unavailable. */
+  caughtSpecies: number[] | null
+  /** Limits reported by the provider. */
+  warnings: string[]
+  /** Why the snapshot is unavailable, or null when available. */
+  reason: string | null
+}
+
 /** How far the trainer has got, returned by `game.progress`. */
 export interface GameProgress {
   /** The play time the save records, or null when the save has none, such as a Stadium or Box save. */
