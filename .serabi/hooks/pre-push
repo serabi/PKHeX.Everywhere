@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+remote_name=${1-}
+remote_url=${2-}
+
+if [ "$remote_name" != upstream ]; then
+    case "$remote_url" in
+        https://github.com/serabi/PKHeX.Everywhere|https://github.com/serabi/PKHeX.Everywhere.git|git@github.com:serabi/PKHeX.Everywhere|git@github.com:serabi/PKHeX.Everywhere.git|ssh://git@github.com/serabi/PKHeX.Everywhere|ssh://git@github.com/serabi/PKHeX.Everywhere.git)
+            exit 0
+            ;;
+    esac
+fi
+
+printf '%s\n' \
+    'Push blocked: this checkout may push only to serabi/PKHeX.Everywhere.' \
+    'Fetch upstream changes through the upstream remote; push work to origin.' >&2
+exit 1
