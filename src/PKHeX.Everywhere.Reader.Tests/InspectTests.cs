@@ -55,6 +55,48 @@ public class InspectTests
         ExportFixture(version.ToString(), bytes, json);
     }
 
+    [Theory]
+    [InlineData(GameVersion.HG)]
+    [InlineData(GameVersion.SS)]
+    [InlineData(GameVersion.SN)]
+    [InlineData(GameVersion.MN)]
+    [InlineData(GameVersion.US)]
+    [InlineData(GameVersion.UM)]
+    public void StartDatesRoundTripAsCalendarDates(GameVersion version)
+    {
+        var save = SyntheticSave(version);
+        foreach (var date in new[] { new DateTime(2000, 2, 29), new DateTime(2024, 2, 29), new DateTime(save is SAV4HGSS ? 2099 : 2050, 12, 31) })
+        {
+            save.SecondsToStart = (uint)(date.AddHours(23).AddMinutes(59) - new DateTime(2000, 1, 1)).TotalSeconds;
+            var bytes = WriteFixture(save, version);
+            var before = (byte[])bytes.Clone();
+            var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+            using var result = JsonDocument.Parse(json);
+            Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+            Assert.Equal(date.ToString("yyyy-MM-dd"), result.RootElement.GetProperty("startDate").GetString());
+            Assert.Equal(before, bytes);
+            ExportFixture($"{version}-date-{date:yyyy-MM-dd}", bytes, json);
+        }
+    }
+
+    [Theory]
+    [InlineData(GameVersion.HG, 0u)]
+    [InlineData(GameVersion.US, 0u)]
+    [InlineData(GameVersion.HG, uint.MaxValue)]
+    [InlineData(GameVersion.US, uint.MaxValue)]
+    [InlineData(GameVersion.LG, 123456789u)]
+    public void UnavailableStartDatesAreOmitted(GameVersion version, uint seconds)
+    {
+        var save = SyntheticSave(version);
+        save.SecondsToStart = seconds;
+        var bytes = WriteFixture(save, version);
+        var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+        using var result = JsonDocument.Parse(json);
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("startDate", out _));
+        ExportFixture($"{version}-date-absent-{seconds}", bytes, json);
+    }
+
     private static byte[] WriteFixture(SaveFile save, GameVersion version)
     {
         var bytes = save.Write().ToArray();

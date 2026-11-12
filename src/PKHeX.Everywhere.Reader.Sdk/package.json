@@ -1,6 +1,6 @@
 {
   "name": "@serabi/pokemon-save-reader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Read Pokémon save Pokédex flags locally in a browser worker",
   "license": "GPL-3.0-or-later",

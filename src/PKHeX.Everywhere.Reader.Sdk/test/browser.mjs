@@ -60,6 +60,19 @@ try {
       results.push({ version, inspected, formatChoice, ms: performance.now() - started,
         unchanged: new Uint8Array(before).every((byte, i) => byte === new Uint8Array(after)[i]) })
     }
+    const dateResults = []
+    const names = ['HG', 'SS', 'SN', 'MN', 'US', 'UM'].flatMap(version =>
+      ['2000-02-29', '2024-02-29', ['HG', 'SS'].includes(version) ? '2099-12-31' : '2050-12-31'].map(date => `${version}-date-${date}`))
+    names.push('HG-date-absent-0', 'US-date-absent-0', 'HG-date-absent-4294967295', 'US-date-absent-4294967295', 'LG-date-absent-123456789')
+    for (const name of names) {
+      const bytes = new Uint8Array(await (await fetch(`/fixtures/${name}.sav`)).arrayBuffer())
+      const expected = await (await fetch(`/fixtures/${name}.json`)).json()
+      const before = await crypto.subtle.digest('SHA-256', bytes)
+      const inspected = await reader.inspect(bytes, { formatId: 'pkhex' })
+      const after = await crypto.subtle.digest('SHA-256', bytes)
+      dateResults.push({ name, inspected, expectedDate: expected.startDate,
+        unchanged: new Uint8Array(before).every((byte, i) => byte === new Uint8Array(after)[i]) })
+    }
     const invalid = await reader.inspect(new Uint8Array([1, 2, 3]))
     reader.dispose()
     let disposed = false
@@ -69,7 +82,7 @@ try {
     controller.abort()
     let cancelled = false
     try { await preparing } catch (error) { cancelled = error.name === 'AbortError' }
-    return { preparingMs, progress, results, invalid, disposed, cancelled }
+    return { preparingMs, progress, results, dateResults, invalid, disposed, cancelled }
   })
   for (const { version, inspected, unchanged } of result.results) {
     assert.equal(inspected.status, 'ok', `${version}: ${JSON.stringify(inspected)}`)
@@ -79,6 +92,12 @@ try {
       assert.ok(inspected.pokedex.seenSpecies.includes(1), `${version}: seen-only species`)
     assert.equal(unchanged, true, version)
   }
+  for (const { name, inspected, expectedDate, unchanged } of result.dateResults) {
+    assert.equal(inspected.status, 'ok', name)
+    assert.equal(inspected.startDate, expectedDate, name)
+    assert.equal(Object.hasOwn(inspected, 'startDate'), expectedDate !== undefined, name)
+    assert.equal(unchanged, true, name)
+  }
   assert.equal(result.invalid.code, 'invalid-save')
   assert.equal(result.disposed, true)
   assert.equal(result.cancelled, true)
@@ -86,7 +105,7 @@ try {
   assert.ok(browserRequests.every((request) => request.method === 'GET' && new URL(request.url).origin === url))
   console.log(JSON.stringify({ preparingMs: result.preparingMs, downloadEvents: result.progress.length,
     results: result.results.map(({ version, inspected, formatChoice, ms, unchanged }) => ({ version, detected: inspected.game.version, formatChoice, ms, unchanged })),
-    cancelled: result.cancelled, requestMethods: [...new Set(requests.map((request) => request.method))],
+    dateFixtures: result.dateResults.length, cancelled: result.cancelled, requestMethods: [...new Set(requests.map((request) => request.method))],
     browserRequestOrigins: [...new Set(browserRequests.map((request) => new URL(request.url).origin))] }, null, 2))
 } finally {
   await browser.close()
