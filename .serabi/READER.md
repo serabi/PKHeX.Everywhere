@@ -162,3 +162,31 @@ stops on an unknown filename. Do not suppress that check to complete a build.
 
 The package has no automated release or deployment workflow. Fork Actions stay
 disabled and publishing remains a separate user-authorized action.
+
+## Adventure-start date (reader 0.1.1)
+
+Schema 1 adds optional top-level `startDate` (`YYYY-MM-DD`) on successful
+snapshots. The allowlist is `SAV4HGSS`, `SAV7SM`, and `SAV7USUM` only.
+At pinned Core `02c9ec108fe3c96735f6c2397eaebc10e29a049f`:
+
+- `Saves/SAV4.cs` reads `SecondsToStart` at `AdventureInfo + 0x34`;
+  `Saves/SAV4HGSS.cs` sets `AdventureInfo = 0`.
+- `Saves/SAV7.cs` forwards `SecondsToStart` to `GameTime`;
+  `Saves/Substructures/Gen7/GameTime7.cs` reads it at `0x28`.
+- `Util/DateUtil.cs:GetDateTime2000` adds unsigned elapsed seconds to
+  2000-01-01, without timezone conversion. Both `SAV_SimpleTrainer.cs` and
+  `Gen7/SAV_Trainer7.cs` in the upstream WinForms save editors bind that
+  conversion to the adventure-start date/time controls. Their corresponding
+  `.Designer.cs` files define the format-specific date bounds.
+
+The reader omits zero timestamps as uninitialized and limits dates to the
+upstream editor ranges (HGSS 2000–2099; Gen7 2000–2050). It cannot establish whether a nonzero date
+reflects the real-world start day, a changed console clock, or save editing.
+Other layouts, including LeafGreen, omit the field. There is no file-date,
+last-save, playtime, or Hall of Fame fallback. No upstream Core source changes
+or new write/export APIs are required.
+
+Generated serialized fixtures round-trip leap days and the maximum supported date for HG, SS,
+SN, MN, US, and UM, plus zero/out-of-range omission and LeafGreen absence.
+The browser gate parses the same fixtures through the published WASM worker
+and checks input digests and absent-property semantics.

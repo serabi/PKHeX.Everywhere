@@ -8,7 +8,7 @@ namespace PKHeX.Everywhere.Reader;
 public static class SaveReader
 {
     public const int MaxInputBytes = 64 * 1024 * 1024;
-    public const string ParserRevision = "serabi-reader-0.1.0+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
+    public const string ParserRevision = "serabi-reader-0.1.1+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
 
     public static string Inspect(byte[] bytes, string? fileName = null, string? formatId = null)
     {
@@ -40,7 +40,8 @@ public static class SaveReader
                                 game.Format?.Name ?? game.DetectedVersion.Name),
                             new ReaderPokedex(pokedex.Status, pokedex.Coverage!, pokedex.SpeciesNamespace!,
                                 pokedex.TrackedSpecies!.ToArray(), pokedex.SeenSpecies!.ToArray(),
-                                pokedex.CaughtSpecies!.ToArray(), pokedex.Warnings.ToArray()));
+                                pokedex.CaughtSpecies!.ToArray(), pokedex.Warnings.ToArray()),
+                            StartDate: ReadStartDate(game.SaveFile));
                     }
                 }
             }
@@ -60,11 +61,21 @@ public static class SaveReader
         }
         return JsonSerializer.Serialize(result, ReaderJsonContext.Default.ReaderResult);
     }
+
+    private static string? ReadStartDate(SaveFile save)
+    {
+        if (save is not (SAV4HGSS or SAV7SM or SAV7USUM)) return null;
+        var seconds = save.SecondsToStart;
+        if (seconds == 0) return null;
+        DateUtil.GetDateTime2000(seconds, out var date, out _);
+        if (date.Year > (save is SAV4HGSS ? 2099 : 2050)) return null;
+        return date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    }
 }
 
 internal sealed record ReaderResult(string Status, int SchemaVersion, string ParserRevision,
     ReaderGame? Game = null, ReaderPokedex? Pokedex = null, string? Code = null, string? Message = null,
-    FormatCandidate[]? CandidateFormats = null, string? PkhexGame = null);
+    FormatCandidate[]? CandidateFormats = null, string? PkhexGame = null, string? StartDate = null);
 internal sealed record ReaderGame(string Version, string[] Versions, string FormatId, string Name);
 internal sealed record ReaderPokedex(string Status, string Coverage, string SpeciesNamespace,
     int[] TrackedSpecies, int[] SeenSpecies, int[] CaughtSpecies, string[] Warnings);

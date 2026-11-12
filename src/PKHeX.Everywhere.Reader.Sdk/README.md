@@ -13,7 +13,7 @@ import { createSaveReader } from '@serabi/pokemon-save-reader'
 
 const controller = new AbortController()
 const reader = await createSaveReader({
-  baseUrl: '/save-reader/0.1.0/',
+  baseUrl: '/save-reader/0.1.1/',
   signal: controller.signal,
   onProgress: ({ loaded, total }) => {
     // Resource counts from .NET, not transferred byte counts.
@@ -54,6 +54,13 @@ the parser revision, detected game, and an available Pokédex snapshot. Species
 arrays are sorted and unique. `caughtSpecies` comes from saved caught flags,
 including released Pokémon. Party and box contents do not define caught history.
 Forms share a species id. Official saves use `national-dex` ids.
+
+Successful snapshots optionally include top-level `startDate` as `YYYY-MM-DD`.
+This is the saved adventure-start calendar date, with no timezone conversion.
+Version 0.1.1 verifies HGSS and Sun/Moon/Ultra Sun/Ultra Moon only. Zero
+(uninitialized) timestamps and dates outside the upstream editor ranges (HGSS 2000–2099; Gen7 2000–2050) are omitted, as are all
+other layouts, including LeafGreen. Missing dates are not inferred from file
+metadata, play time, last save, or Hall of Fame records.
 
 Game values use PKHeX enum names, such as `C`, `US`, and `UM`. `game.versions`
 lists candidate individual games. FireRed and LeafGreen saves have no reliable
