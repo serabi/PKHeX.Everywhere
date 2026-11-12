@@ -13,7 +13,7 @@ import { createSaveReader } from '@serabi/pokemon-save-reader'
 
 const controller = new AbortController()
 const reader = await createSaveReader({
-  baseUrl: '/save-reader/0.1.1/',
+  baseUrl: '/save-reader/0.1.2/',
   signal: controller.signal,
   onProgress: ({ loaded, total }) => {
     // Resource counts from .NET, not transferred byte counts.
@@ -76,6 +76,16 @@ Errors have `status: 'error'`, `code`, and `message`. Codes are `invalid-save`,
 as `formatId` to inspect again. Do not silently retry a hack as its base game.
 An unavailable Pokédex returns an error, never a successful empty caught set.
 Preparation errors reject the creation promise.
+
+Version 0.1.2 also reads 64 KiB Emerald saves when all 14 main sections are
+present, their signatures and save counters agree, and Core validates their
+checksums and Emerald identity. A private inspection copy is extended with erased
+bytes for Core's 128 KiB autodetector, preserving registered-format choices and
+expanded-species checks. No repaired save is returned or written. Successful
+results include a `pokedex.warnings` message: the surviving slot may be older
+than a missing slot. Display this warning before confirming the import.
+Missing or corrupt sections and 64 KiB Ruby/Sapphire or FRLG layouts are rejected.
+This does not establish support for emulator save states or ROM hacks.
 
 Use extracted game saves. ZIP archives are rejected before Core's archive
 handler runs. Emulator save states, ROMs, and encrypted console backup

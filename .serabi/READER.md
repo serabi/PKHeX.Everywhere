@@ -190,3 +190,28 @@ Generated serialized fixtures round-trip leap days and the maximum supported dat
 SN, MN, US, and UM, plus zero/out-of-range omission and LeafGreen absence.
 The browser gate parses the same fixtures through the published WASM worker
 and checks input digests and absent-property semantics.
+
+## Half-size Emerald recovery (reader 0.1.2)
+
+`Reader/HalfSizeEmerald.cs` adds an inspection-only fallback for exactly 65,536
+bytes. Pinned Core's `SaveUtil.IsG3` only autodetects 128 KiB, although `SAV3`
+handles a single 56 KiB main slot. Before extending a private copy with erased
+bytes, the fallback checks all 14 unique section IDs, the 0x08012025 signatures
+and a consistent save counter. Normal `Game.LoadFrom` detection retains registered
+format ambiguity and expanded-species checks; only a checksum-valid `SAV3E` with
+no custom format can succeed. Neither Core nor its submodule pin changes.
+
+The returned National Dex snapshot has complete flag coverage for the surviving
+slot and an explicit warning that a newer save may be missing. It is not a claim
+that the missing half was reconstructed. The website must display warnings before
+creation. No raw save write/export API is exposed, and the caller's bytes stay
+unchanged.
+
+Native and WASM fixtures cover caught history with empty storage, an empty dex,
+rotated sections, checksum errors, missing and duplicate sections, invalid
+signatures, mixed counters, blank data, RS/FRLG layouts and an expanded-species
+format choice. They are synthetic; a permitted real emulator export is a separate
+check. To find one, request an existing 65,536-byte in-game `.sav` or `.srm` from
+its owner. Reproducing a fresh save in a disposable emulator profile configured
+for 64 KiB flash is another candidate, but needs a user-supplied ROM and verified
+output; never change the player's active profile or truncate their only save.

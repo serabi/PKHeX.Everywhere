@@ -77,7 +77,7 @@ export async function createSaveReader({ baseUrl, onProgress, signal }: CreateRe
       if (disposed) return Promise.reject(new DOMException('Save reader disposed.', 'AbortError'))
       if (!(bytes instanceof Uint8Array)) return Promise.reject(new TypeError('Expected Uint8Array save bytes.'))
       if (bytes.byteLength > MAX_INPUT_BYTES) return Promise.resolve({
-        status: 'error', schemaVersion: 1, parserRevision: 'serabi-reader-0.1.1',
+        status: 'error', schemaVersion: 1, parserRevision: 'serabi-reader-0.1.2',
         code: 'input-too-large', message: 'The save exceeds the 64 MiB input limit.',
       })
       const copy = bytes.slice()
