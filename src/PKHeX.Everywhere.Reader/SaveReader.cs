@@ -8,7 +8,7 @@ namespace PKHeX.Everywhere.Reader;
 public static class SaveReader
 {
     public const int MaxInputBytes = 64 * 1024 * 1024;
-    public const string ParserRevision = "serabi-reader-0.1.1+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
+    public const string ParserRevision = "serabi-reader-0.1.2+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
 
     public static string Inspect(byte[] bytes, string? fileName = null, string? formatId = null)
     {
@@ -28,7 +28,8 @@ public static class SaveReader
                     result = Error("unsupported-format", "This save format is not registered.");
                 else
                 {
-                    var game = Game.LoadFrom((byte[])bytes.Clone(), fileName, format);
+                    var recovered = HalfSizeEmerald.Load(bytes, fileName, format);
+                    var game = recovered ?? Game.LoadFrom((byte[])bytes.Clone(), fileName, format);
                     var pokedex = game.Pokedex;
                     if (pokedex.Status != "available") result = Error("unsupported-pokedex", pokedex.Reason ?? "This save has no verified Pokédex provider.");
                     else
@@ -40,7 +41,8 @@ public static class SaveReader
                                 game.Format?.Name ?? game.DetectedVersion.Name),
                             new ReaderPokedex(pokedex.Status, pokedex.Coverage!, pokedex.SpeciesNamespace!,
                                 pokedex.TrackedSpecies!.ToArray(), pokedex.SeenSpecies!.ToArray(),
-                                pokedex.CaughtSpecies!.ToArray(), pokedex.Warnings.ToArray()),
+                                pokedex.CaughtSpecies!.ToArray(), recovered is null ? pokedex.Warnings.ToArray()
+                                    : [.. pokedex.Warnings, HalfSizeEmerald.Warning]),
                             StartDate: ReadStartDate(game.SaveFile));
                     }
                 }
