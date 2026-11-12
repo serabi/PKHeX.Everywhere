@@ -30,8 +30,9 @@ try {
 
 Copy the entire package `assets/` directory to the versioned URL above before
 using it. It contains `worker.js`, `_framework/`, `notices.json`, and
-`manifest.json`. It also includes `source.tar.gz`, containing the release's
-fork source and both pinned submodule sources. Keep every version immutable.
+`manifest.json`. It also includes three source archives containing the release's
+fork source and both pinned submodule sources. Extract them into the same folder
+to restore the source tree. Keep every version immutable.
 Keep `dist/index.js` in the
 website's normal bundle; the runtime is loaded only when `createSaveReader`
 is called. Serve JavaScript modules and WASM with their correct MIME types.

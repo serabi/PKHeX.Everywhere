@@ -1,10 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { gzipSync, brotliCompressSync } from 'node:zlib'
+import { gzipSync, brotliCompressSync, constants } from 'node:zlib'
 import { build } from 'esbuild'
 
 const sdk = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -43,28 +42,24 @@ for (const file of readdirSync(join(assets, '_framework'))) {
 notices.push({ name: 'CryptoJS', version: '4.2.0', license: 'MIT', source: 'https://github.com/brix/crypto-js/tree/4.2.0', text: readFileSync(join(sdk, 'node_modules/crypto-js/LICENSE'), 'utf8') })
 writeFileSync(join(sdk, 'notices.json'), JSON.stringify(notices, null, 2) + '\n')
 cpSync(join(sdk, 'notices.json'), join(assets, 'notices.json'))
-const sourceStage = mkdtempSync(join(tmpdir(), 'serabi-reader-source-'))
-try {
-  for (const directory of ['', 'external/PKHeX', 'external/PKHeX-Plugins']) {
-    const archive = join(sourceStage, 'part.tar')
-    execFileSync('git', ['archive', '--format=tar', `--prefix=PKHeX.Everywhere/${directory ? directory + '/' : ''}`, '-o', archive, 'HEAD'], { cwd: join(repo, directory) })
-    execFileSync('tar', ['-xf', archive, '-C', sourceStage])
-  }
-  execFileSync('tar', ['-czf', join(assets, 'source.tar.gz'), '-C', sourceStage, 'PKHeX.Everywhere'])
-} finally {
-  execFileSync('trash', [sourceStage])
+const sourceArchives = ['reader-source.tar.gz', 'pkhex-source.tar.gz', 'plugins-source.tar.gz']
+for (const [index, directory] of ['', 'external/PKHeX', 'external/PKHeX-Plugins'].entries()) {
+  execFileSync('git', ['archive', '--format=tar.gz', `--prefix=PKHeX.Everywhere/${directory ? directory + '/' : ''}`, '-o', join(assets, sourceArchives[index]), 'HEAD'], { cwd: join(repo, directory) })
 }
 const files = readdirSync(assets, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => {
   const path = join(entry.parentPath, entry.name)
   const bytes = readFileSync(path)
-  return { path: relative(assets, path), bytes: bytes.length, gzipBytes: gzipSync(bytes).length, brotliBytes: brotliCompressSync(bytes).length, sha256: createHash('sha256').update(bytes).digest('hex') }
+  if (bytes.length > 25 * 1024 * 1024) throw new Error(`Asset exceeds the static host's 25 MiB limit: ${path}`)
+  return { path: relative(assets, path), bytes: bytes.length, gzipBytes: gzipSync(bytes).length,
+    brotliBytes: brotliCompressSync(bytes, path.endsWith('.tar.gz') ? { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } } : {}).length,
+    sha256: createHash('sha256').update(bytes).digest('hex') }
 })
 const manifest = {
   schemaVersion: 1, package: pkg.name, version: pkg.version, sourceCommit: git('rev-parse', 'HEAD'),
   sourceDirty: git('status', '--porcelain').length > 0,
   coreRevision: git('-C', 'external/PKHeX', 'rev-parse', 'HEAD'),
   pluginsRevision: git('-C', 'external/PKHeX-Plugins', 'rev-parse', 'HEAD'),
-  sourceArchive: 'source.tar.gz',
+  sourceArchives,
   files,
   totals: files.reduce((total, file) => ({ bytes: total.bytes + file.bytes, gzipBytes: total.gzipBytes + file.gzipBytes, brotliBytes: total.brotliBytes + file.brotliBytes }), { bytes: 0, gzipBytes: 0, brotliBytes: 0 }),
 }

@@ -65,9 +65,11 @@ files. It writes SHA-256 hashes, source revisions, a dirty-source marker, and
 asset sizes to `assets/manifest.json`. Build a release from a clean commit and
 check that `sourceDirty` is false. Never label an uncommitted build as a release.
 The build bundles that commit's source and both pinned submodule sources in
-`assets/source.tar.gz`. Serve it with the other assets so the distributed reader
-has a matching source download. Runtime and CryptoJS notices also link to their
-exact upstream sources.
+three archives listed under `sourceArchives` in the manifest. Serve them with
+the other assets so the distributed reader has matching source downloads.
+Extract all three into the same folder to reconstruct the source tree. Separate
+archives keep each asset below the static host's 25 MiB limit, which the build
+checks. Runtime and CryptoJS notices also link to their exact upstream sources.
 
 Copy the complete `assets/` tree under an immutable website path. Install the
 matching local tarball in the website and record its SHA-256. Neither a registry
