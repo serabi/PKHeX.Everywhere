@@ -4,6 +4,9 @@ This fork keeps upstream's application and submodule pins intact. The current
 branch adds a plan and Git push protection. It contains no save-reader
 implementation.
 
+GitHub Actions are disabled on the fork for this planning stage, so publishing
+these documents does not start upstream build or deployment workflows.
+
 - Fork: https://github.com/serabi/PKHeX.Everywhere
 - Upstream: https://github.com/arleypadua/PKHeX.Everywhere
 - Implementation plan: [PLAN.md](PLAN.md)
