@@ -26,6 +26,7 @@ export const queryTopics: Record<QueryName, readonly Topic[]> = {
   'game.moves': ['game'],
   'game.natures': ['game'],
   'game.originGames': ['game'],
+  'game.pokedex': ['game', 'party', 'box'],
   'game.progress': ['game', 'events', 'party', 'box'],
   'game.types': ['game'],
   'game.version': ['game'],

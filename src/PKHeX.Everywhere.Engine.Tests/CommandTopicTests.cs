@@ -54,6 +54,7 @@ public class CommandTopicTests
         ["game.get"] = (_, _) => ["[]"],
         ["game.version"] = (_, _) => ["[]"],
         ["game.progress"] = (_, _) => ["[]"],
+        ["game.pokedex"] = (_, _) => ["[]"],
         ["game.load"] = (_, saveFile) =>
         [
             Args(Convert.ToBase64String(File.ReadAllBytes(saveFile == SaveFilePath.HgSs ? SaveFilePath.Emerald : SaveFilePath.HgSs)), "other.sav", null!),

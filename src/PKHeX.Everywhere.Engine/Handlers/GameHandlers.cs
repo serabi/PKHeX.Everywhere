@@ -22,6 +22,10 @@ public static class GameHandlers
     [Query("game.progress", Topics.Game, Topics.Events, Topics.Party, Topics.Box)]
     public static GameProgress Progress(Game game) => game.Progress.ToDto();
 
+    /// <summary>Reads species marked seen and caught in the saved Pokédex, including Pokémon no longer owned.</summary>
+    [Query("game.pokedex", Topics.Game, Topics.Party, Topics.Box)]
+    public static GamePokedex Pokedex(Game game) => game.Pokedex.ToDto();
+
     // Serialising compacts LGPE storage, which moves box slots.
     [Command("game.file", Topics.Party, Topics.Box)]
     public static LoadedSave? File(Session session) => session.Game?.ToFile(session.FileName);
