@@ -10,7 +10,7 @@ export interface InspectSuccess {
   startDate?: string
   /** Trainer identity for retail saves (game.formatId === 'pkhex'), when readable. The name is untrusted text from the file. */
   trainer?: { id32: number; name: string }
-  /** Played seconds for retail saves (game.formatId === 'pkhex'). */
+  /** Played seconds for retail saves (game.formatId === 'pkhex'), when the layout stores play time. */
   playSeconds?: number
   game: { version: string; versions: string[]; formatId: string; name: string }
   pokedex: {
