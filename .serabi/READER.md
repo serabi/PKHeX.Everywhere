@@ -215,3 +215,14 @@ check. To find one, request an existing 65,536-byte in-game `.sav` or `.srm` fro
 its owner. Reproducing a fresh save in a disposable emulator profile configured
 for 64 KiB flash is another candidate, but needs a user-supplied ROM and verified
 output; never change the player's active profile or truncate their only save.
+
+## Checksum warnings (reader 0.1.3)
+
+When Core reports invalid checksums on a loaded save, `pokedex.warnings` includes:
+
+> This save's checksum doesn't match. It may have been edited or damaged.
+
+Inspection still returns `status: "ok"` with the same caught flags and coverage.
+Display the warning before confirming an import. Existing provider and recovery
+warnings remain. Valid 64 KiB Emerald recovery passes Core's checksum check and
+keeps only its missing-slot warning; damaged half-size saves remain rejected.

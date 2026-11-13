@@ -25,6 +25,7 @@ public class HalfSizeEmeraldTests
             Assert.Equal(empty ? [] : new[] { 25, 133, 252, 386 }, dex.GetProperty("caughtSpecies").EnumerateArray().Select(n => n.GetInt32()));
             Assert.Equal(empty ? [] : new[] { 1, 25, 133, 252, 386 }, dex.GetProperty("seenSpecies").EnumerateArray().Select(n => n.GetInt32()));
             Assert.Equal("complete", dex.GetProperty("coverage").GetString());
+            Assert.Equal(1, dex.GetProperty("warnings").GetArrayLength());
             Assert.Contains("newer save may be missing", dex.GetProperty("warnings")[0].GetString());
             Assert.False(result.RootElement.TryGetProperty("startDate", out _));
             Assert.Equal(before, bytes);

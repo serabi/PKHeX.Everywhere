@@ -13,7 +13,7 @@ import { createSaveReader } from '@serabi/pokemon-save-reader'
 
 const controller = new AbortController()
 const reader = await createSaveReader({
-  baseUrl: '/save-reader/0.1.2/',
+  baseUrl: '/save-reader/0.1.3/',
   signal: controller.signal,
   onProgress: ({ loaded, total }) => {
     // Resource counts from .NET, not transferred byte counts.
@@ -100,3 +100,14 @@ The package retains GPL-3.0-or-later licensing. Ship its license and
 `notices.json` with the assets, and provide the corresponding fork source at
 the release commit. Notices include PKHeX.Core, .NET and its third-party
 notices, and the bundled CryptoJS license.
+
+## Checksum warnings (reader 0.1.3)
+
+When Core reports invalid checksums on a loaded save, `pokedex.warnings` includes:
+
+> This save's checksum doesn't match. It may have been edited or damaged.
+
+Inspection still returns `status: "ok"` with the same caught flags and coverage.
+Display the warning before confirming an import. Existing provider and recovery
+warnings remain. Valid 64 KiB Emerald recovery passes Core's checksum check and
+keeps only its missing-slot warning; damaged half-size saves remain rejected.
