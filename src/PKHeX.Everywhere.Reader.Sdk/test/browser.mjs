@@ -49,7 +49,7 @@ try {
     const reader = await createSaveReader({ baseUrl: '/assets/', onProgress: (value) => progress.push(value) })
     const preparingMs = performance.now() - started
     const results = []
-    for (const version of ['C', 'C-empty', 'FR', 'LG', 'HG', 'SS', 'US', 'UM', 'GP', 'BD']) {
+    for (const version of ['C', 'C-empty', 'FR', 'LG', 'HG', 'SS', 'US', 'UM', 'GP', 'BD', 'HG-checksum-invalid', 'SS-checksum-invalid', 'FR-checksum-invalid']) {
       const bytes = new Uint8Array(await (await fetch(`/fixtures/${version}.sav`)).arrayBuffer())
       const before = await crypto.subtle.digest('SHA-256', bytes)
       const started = performance.now()
@@ -97,9 +97,11 @@ try {
     return { preparingMs, progress, results, dateResults, halfResults, invalid, disposed, cancelled }
   }, halfFixtures)
   for (const { version, inspected, unchanged } of result.results) {
+    const expected = JSON.parse(await readFile(resolve(fixtures, `${version}.json`), 'utf8'))
+    assert.deepEqual(inspected, expected, version)
     assert.equal(inspected.status, 'ok', `${version}: ${JSON.stringify(inspected)}`)
-    assert.deepEqual(inspected.pokedex.caughtSpecies, version === 'C-empty' ? [] : [25, 133], version)
-    assert.ok(inspected.game.versions.includes(version.replace('-empty', '')), version)
+    assert.deepEqual(inspected.pokedex.caughtSpecies, version === 'C-empty' ? [] : version.endsWith('checksum-invalid') ? [25] : [25, 133], version)
+    assert.ok(inspected.game.versions.includes(version.replace('-empty', '').replace('-checksum-invalid', '')), version)
     if (['C', 'FR', 'LG', 'HG', 'SS', 'US', 'UM'].includes(version))
       assert.ok(inspected.pokedex.seenSpecies.includes(1), `${version}: seen-only species`)
     assert.equal(unchanged, true, version)

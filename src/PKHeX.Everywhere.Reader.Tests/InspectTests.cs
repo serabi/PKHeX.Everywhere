@@ -48,11 +48,43 @@ public class InspectTests
         Assert.Equal(new[] { 25, 133 }, dex.GetProperty("caughtSpecies").EnumerateArray().Select(id => id.GetInt32()));
         if (save is SAV2 or SAV3 or SAV4 or SAV7)
             Assert.Contains(1, dex.GetProperty("seenSpecies").EnumerateArray().Select(id => id.GetInt32()));
+        Assert.Empty(dex.GetProperty("warnings").EnumerateArray());
+        Assert.True(Game.LoadFrom((byte[])bytes.Clone(), format: SaveFormats.PKHeX).SaveFile.ChecksumsValid);
         Assert.Equal(before, bytes);
         var versions = result.RootElement.GetProperty("game").GetProperty("versions").EnumerateArray().Select(item => item.GetString());
         Assert.Contains(version.ToString(), versions);
         Assert.DoesNotContain(Game.LoadFrom((byte[])bytes.Clone(), format: SaveFormats.PKHeX).Trainer.PokemonBox.All, slot => !slot.IsEmpty);
         ExportFixture(version.ToString(), bytes, json);
+    }
+
+    [Theory]
+    [InlineData(GameVersion.HG, 0x10)]
+    [InlineData(GameVersion.SS, 0x10)]
+    [InlineData(GameVersion.FR, 0x10)]
+    public void InvalidChecksumWarnsWithoutChangingPokedex(GameVersion version, int offset)
+    {
+        var save = SyntheticSave(version);
+        var pokemon = save.BlankPKM;
+        pokemon.Species = 25;
+        save.SetBoxSlotAtIndex(pokemon, 0);
+        var bytes = WriteFixture(save, version);
+        Assert.True(Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile.ChecksumsValid);
+        using var valid = JsonDocument.Parse(SaveReader.Inspect(bytes, formatId: "pkhex"));
+        bytes[offset] ^= 1;
+        var before = bytes.ToArray();
+        var loaded = Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile;
+        Assert.False(loaded.ChecksumsValid);
+        if (loaded is SAV4HGSS) Assert.Contains("Small block checksum is invalid", loaded.ChecksumInfo);
+        var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+        using var result = JsonDocument.Parse(json);
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        var dex = result.RootElement.GetProperty("pokedex");
+        foreach (var field in new[] { "status", "coverage", "speciesNamespace", "trackedSpecies", "seenSpecies", "caughtSpecies" })
+            Assert.Equal(valid.RootElement.GetProperty("pokedex").GetProperty(field).GetRawText(), dex.GetProperty(field).GetRawText());
+        Assert.Equal(new[] { "This save's checksum doesn't match. It may have been edited or damaged." },
+            dex.GetProperty("warnings").EnumerateArray().Select(warning => warning.GetString()));
+        Assert.Equal(before, bytes);
+        ExportFixture($"{version}-checksum-invalid", bytes, json);
     }
 
     [Theory]
@@ -104,6 +136,7 @@ public class InspectTests
         {
             bytes[0x2866] = 0xFF;
             bytes[0x2D11] = 0xFF;
+            bytes = new SAV2(bytes, LanguageID.English, version).Write().ToArray();
         }
         if (version == GameVersion.GP)
         {
