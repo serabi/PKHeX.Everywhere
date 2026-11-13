@@ -226,3 +226,12 @@ Inspection still returns `status: "ok"` with the same caught flags and coverage.
 Display the warning before confirming an import. Existing provider and recovery
 warnings remain. Valid 64 KiB Emerald recovery passes Core's checksum check and
 keeps only its missing-slot warning; damaged half-size saves remain rejected.
+
+## Trainer and play time (reader 0.1.4)
+
+Retail successes (`game.formatId === 'pkhex'`) add `trainer` (Core `ID32` and
+`OT`) and `playSeconds` (`PlayedHours`, `PlayedMinutes`, `PlayedSeconds`). The
+website uses them to tell whether a save belongs to the same playthrough. They
+stay in the browser and are never logged. `trainer` is omitted when the name is
+blank. ROM hack formats omit both. Native tests round-trip C, FR, HGSS, USUM
+and BDSP fixtures; the browser gate checks the same fixtures through WASM.

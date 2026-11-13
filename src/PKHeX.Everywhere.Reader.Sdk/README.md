@@ -62,6 +62,11 @@ Version 0.1.1 verifies HGSS and Sun/Moon/Ultra Sun/Ultra Moon only. Zero
 other layouts, including LeafGreen. Missing dates are not inferred from file
 metadata, play time, last save, or Hall of Fame records.
 
+Retail saves (`game.formatId === 'pkhex'`) also include `trainer`
+(`{ id32, name }`) and `playSeconds`. Use them to tell whether a save belongs to
+the same playthrough, and keep them in the browser. `trainer` is omitted when
+the name is blank. ROM hack formats omit both.
+
 Game values use PKHeX enum names, such as `C`, `US`, and `UM`. `game.versions`
 lists candidate individual games. FireRed and LeafGreen saves have no reliable
 stored title discriminator: both return `version: 'FRLG'` and candidates
