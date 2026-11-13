@@ -65,6 +65,7 @@ try {
     const dateResults = []
     const names = ['HG', 'SS', 'SN', 'MN', 'US', 'UM'].flatMap(version =>
       ['2000-02-29', '2024-02-29', ['HG', 'SS'].includes(version) ? '2099-12-31' : '2050-12-31'].map(date => `${version}-date-${date}`))
+    names.push(...['C', 'FR', 'HG', 'US', 'BD'].map(version => `${version}-trainer`))
     names.push('HG-date-absent-0', 'US-date-absent-0', 'HG-date-absent-4294967295', 'US-date-absent-4294967295', 'LG-date-absent-123456789')
     for (const name of names) {
       const bytes = new Uint8Array(await (await fetch(`/fixtures/${name}.sav`)).arrayBuffer())
@@ -72,7 +73,7 @@ try {
       const before = await crypto.subtle.digest('SHA-256', bytes)
       const inspected = await reader.inspect(bytes, { formatId: 'pkhex' })
       const after = await crypto.subtle.digest('SHA-256', bytes)
-      dateResults.push({ name, inspected, expectedDate: expected.startDate,
+      dateResults.push({ name, inspected, expectedDate: expected.startDate, expectedTrainer: expected.trainer, expectedPlaySeconds: expected.playSeconds,
         unchanged: new Uint8Array(before).every((byte, i) => byte === new Uint8Array(after)[i]) })
     }
     const halfResults = []
@@ -106,8 +107,12 @@ try {
       assert.ok(inspected.pokedex.seenSpecies.includes(1), `${version}: seen-only species`)
     assert.equal(unchanged, true, version)
   }
-  for (const { name, inspected, expectedDate, unchanged } of result.dateResults) {
+  for (const { name, inspected, expectedDate, expectedTrainer, expectedPlaySeconds, unchanged } of result.dateResults) {
     assert.equal(inspected.status, 'ok', name)
+    assert.deepEqual(inspected.trainer, expectedTrainer, name)
+    assert.equal(Object.hasOwn(inspected, 'trainer'), expectedTrainer !== undefined, name)
+    assert.equal(inspected.playSeconds, expectedPlaySeconds, name)
+    assert.equal(Object.hasOwn(inspected, 'playSeconds'), expectedPlaySeconds !== undefined, name)
     assert.equal(inspected.startDate, expectedDate, name)
     assert.equal(Object.hasOwn(inspected, 'startDate'), expectedDate !== undefined, name)
     assert.equal(unchanged, true, name)

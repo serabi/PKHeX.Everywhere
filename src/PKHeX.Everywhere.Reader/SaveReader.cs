@@ -8,7 +8,7 @@ namespace PKHeX.Everywhere.Reader;
 public static class SaveReader
 {
     public const int MaxInputBytes = 64 * 1024 * 1024;
-    public const string ParserRevision = "serabi-reader-0.1.3+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
+    public const string ParserRevision = "serabi-reader-0.1.4+pkhex.02c9ec108fe3c96735f6c2397eaebc10e29a049f";
 
     public static string Inspect(byte[] bytes, string? fileName = null, string? formatId = null)
     {
@@ -36,17 +36,23 @@ public static class SaveReader
                     {
                         var version = game.DetectedVersion.Version;
                         var versions = game.DetectedVersions.Select(candidate => candidate.Version.ToString()).ToArray();
+                        var save = game.SaveFile;
+                        var loadedFormatId = game.Format?.Id ?? "pkhex";
+                        var retail = loadedFormatId == "pkhex";
                         var warnings = pokedex.Warnings.ToList();
                         if (recovered is not null) warnings.Add(HalfSizeEmerald.Warning);
-                        if (!game.SaveFile.ChecksumsValid)
+                        if (!save.ChecksumsValid)
                             warnings.Add("This save's checksum doesn't match. It may have been edited or damaged.");
                         result = new("ok", 1, ParserRevision,
-                            new ReaderGame(version.ToString(), versions, game.Format?.Id ?? "pkhex",
+                            new ReaderGame(version.ToString(), versions, loadedFormatId,
                                 game.Format?.Name ?? game.DetectedVersion.Name),
                             new ReaderPokedex(pokedex.Status, pokedex.Coverage!, pokedex.SpeciesNamespace!,
                                 pokedex.TrackedSpecies!.ToArray(), pokedex.SeenSpecies!.ToArray(),
                                 pokedex.CaughtSpecies!.ToArray(), warnings.ToArray()),
-                            StartDate: ReadStartDate(game.SaveFile));
+                            StartDate: ReadStartDate(save),
+                            Trainer: retail && !string.IsNullOrWhiteSpace(save.OT) ? new ReaderTrainer(save.ID32, save.OT) : null,
+                            PlaySeconds: retail && game.Progress.PlayTime is { } time
+                                ? time.Hours * 3600L + time.Minutes * 60 + time.Seconds : null);
                     }
                 }
             }
@@ -80,7 +86,9 @@ public static class SaveReader
 
 internal sealed record ReaderResult(string Status, int SchemaVersion, string ParserRevision,
     ReaderGame? Game = null, ReaderPokedex? Pokedex = null, string? Code = null, string? Message = null,
-    FormatCandidate[]? CandidateFormats = null, string? PkhexGame = null, string? StartDate = null);
+    FormatCandidate[]? CandidateFormats = null, string? PkhexGame = null, string? StartDate = null,
+    ReaderTrainer? Trainer = null, long? PlaySeconds = null);
+internal sealed record ReaderTrainer(uint Id32, string Name);
 internal sealed record ReaderGame(string Version, string[] Versions, string FormatId, string Name);
 internal sealed record ReaderPokedex(string Status, string Coverage, string SpeciesNamespace,
     int[] TrackedSpecies, int[] SeenSpecies, int[] CaughtSpecies, string[] Warnings);

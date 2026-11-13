@@ -13,7 +13,7 @@ import { createSaveReader } from '@serabi/pokemon-save-reader'
 
 const controller = new AbortController()
 const reader = await createSaveReader({
-  baseUrl: '/save-reader/0.1.3/',
+  baseUrl: '/save-reader/0.1.4/',
   signal: controller.signal,
   onProgress: ({ loaded, total }) => {
     // Resource counts from .NET, not transferred byte counts.
@@ -61,6 +61,15 @@ Version 0.1.1 verifies HGSS and Sun/Moon/Ultra Sun/Ultra Moon only. Zero
 (uninitialized) timestamps and dates outside the upstream editor ranges (HGSS 2000–2099; Gen7 2000–2050) are omitted, as are all
 other layouts, including LeafGreen. Missing dates are not inferred from file
 metadata, play time, last save, or Hall of Fame records.
+
+Version 0.1.4 adds `trainer` (`{ id32, name }`) and `playSeconds` to retail
+saves (`game.formatId === 'pkhex'`). Use them to tell whether a save belongs to
+the same playthrough. Keep them in the browser and out of analytics, logs and
+error reports. The name comes from the file: render it as text, never as HTML.
+`trainer` is omitted when the name is blank, and ROM hack formats omit both.
+A new save reports `playSeconds: 0`. Gen 1 and 2 saves have no secret ID, so
+`id32` is the 16-bit trainer ID there, and Gen 1 play time stops at 255 hours.
+Treat a checksum warning as a sign these values may be damaged.
 
 Game values use PKHeX enum names, such as `C`, `US`, and `UM`. `game.versions`
 lists candidate individual games. FireRed and LeafGreen saves have no reliable

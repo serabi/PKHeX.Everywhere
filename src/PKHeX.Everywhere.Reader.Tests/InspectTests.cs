@@ -129,6 +129,75 @@ public class InspectTests
         ExportFixture($"{version}-date-absent-{seconds}", bytes, json);
     }
 
+    [Theory]
+    [InlineData(GameVersion.C)]
+    [InlineData(GameVersion.HG)]
+    [InlineData(GameVersion.US)]
+    [InlineData(GameVersion.BD)]
+    [InlineData(GameVersion.FR)]
+    public void TrainerAndPlayTimeRoundTrip(GameVersion version)
+    {
+        var save = SyntheticSave(version);
+        if (save is SAV3FRLG frlg)
+        {
+            WriteUInt16LittleEndian(frlg.Small[0x6..], 1);
+            save = new SAV3FRLG(frlg.Write().ToArray()) { Version = version };
+        }
+        save.OT = "READER";
+        save.TID16 = 12345;
+        save.SID16 = 23456;
+        save.PlayedHours = 12;
+        save.PlayedMinutes = 34;
+        save.PlayedSeconds = 56;
+        var bytes = WriteFixture(save, version);
+        var loaded = Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile;
+        Assert.Equal(save.ID32, loaded.ID32);
+        Assert.Equal("READER", loaded.OT);
+        Assert.Equal(12, loaded.PlayedHours);
+        Assert.Equal(34, loaded.PlayedMinutes);
+        Assert.Equal(56, loaded.PlayedSeconds);
+        var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+        using var result = JsonDocument.Parse(json);
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.Equal(save.ID32, result.RootElement.GetProperty("trainer").GetProperty("id32").GetUInt32());
+        Assert.Equal("READER", result.RootElement.GetProperty("trainer").GetProperty("name").GetString());
+        Assert.Equal(45296, result.RootElement.GetProperty("playSeconds").GetInt64());
+        ExportFixture($"{version}-trainer", bytes, json);
+    }
+
+    [Fact]
+    public void BlankTrainerNameOmitsTrainer()
+    {
+        var save = SyntheticSave(GameVersion.C);
+        save.OT = "";
+        using var result = JsonDocument.Parse(SaveReader.Inspect(WriteFixture(save, GameVersion.C), formatId: "pkhex"));
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("trainer", out _));
+        Assert.Equal(0, result.RootElement.GetProperty("playSeconds").GetInt64());
+    }
+
+    [Fact]
+    public void NonRetailIdentityIsOmitted()
+    {
+        SaveFormats.Register(new IdentityFormat());
+        using var result = JsonDocument.Parse(SaveReader.Inspect([1, 2, 3], formatId: "reader-identity"));
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("trainer", out _));
+        Assert.False(result.RootElement.TryGetProperty("playSeconds", out _));
+    }
+
+    private sealed class IdentityFormat : ISaveFormat, IPokedexProvider
+    {
+        public string Id => "reader-identity";
+        public string Name => "Reader Identity";
+        public GameVersion BaseGame => GameVersion.C;
+        public IReadOnlySet<Capability> Capabilities { get; } = new HashSet<Capability>();
+        public SaveFormatMatch Detect(ReadOnlySpan<byte> data) => SaveFormatMatch.No;
+        public SaveFile Load(byte[] data) => BlankSaveFile.Get(GameVersion.C, "READER");
+        public PokedexSnapshot ReadPokedex(SaveFile save) =>
+            PokedexSnapshot.Available([25], [], [25], "test-dex", "partial", []);
+    }
+
     private static byte[] WriteFixture(SaveFile save, GameVersion version)
     {
         var bytes = save.Write().ToArray();
