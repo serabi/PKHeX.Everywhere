@@ -8,7 +8,7 @@ export interface InspectSuccess {
   parserRevision: string
   /** Saved adventure-start calendar date (YYYY-MM-DD), when verified and initialized. */
   startDate?: string
-  /** Trainer identity for retail saves (game.formatId === 'pkhex'), when readable. */
+  /** Trainer identity for retail saves (game.formatId === 'pkhex'), when readable. The name is untrusted text from the file. */
   trainer?: { id32: number; name: string }
   /** Played seconds for retail saves (game.formatId === 'pkhex'). */
   playSeconds?: number

@@ -166,6 +166,17 @@ public class InspectTests
     }
 
     [Fact]
+    public void BlankTrainerNameOmitsTrainer()
+    {
+        var save = SyntheticSave(GameVersion.C);
+        save.OT = "";
+        using var result = JsonDocument.Parse(SaveReader.Inspect(WriteFixture(save, GameVersion.C), formatId: "pkhex"));
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("trainer", out _));
+        Assert.Equal(0, result.RootElement.GetProperty("playSeconds").GetInt64());
+    }
+
+    [Fact]
     public void NonRetailIdentityIsOmitted()
     {
         SaveFormats.Register(new IdentityFormat());

@@ -233,5 +233,7 @@ Retail successes (`game.formatId === 'pkhex'`) add `trainer` (Core `ID32` and
 `OT`) and `playSeconds` (`PlayedHours`, `PlayedMinutes`, `PlayedSeconds`). The
 website uses them to tell whether a save belongs to the same playthrough. They
 stay in the browser and are never logged. `trainer` is omitted when the name is
-blank. ROM hack formats omit both. Native tests round-trip C, FR, HGSS, USUM
+blank, and `playSeconds` follows the Facade's `Progress.PlayTime`, which skips
+layouts without play time. ROM hack formats omit both. Gen 1 and 2 have no
+secret ID, so `id32` is only the 16-bit trainer ID there. Native tests round-trip C, FR, HGSS, USUM
 and BDSP fixtures; the browser gate checks the same fixtures through WASM.

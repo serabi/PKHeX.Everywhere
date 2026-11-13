@@ -37,20 +37,22 @@ public static class SaveReader
                         var version = game.DetectedVersion.Version;
                         var versions = game.DetectedVersions.Select(candidate => candidate.Version.ToString()).ToArray();
                         var save = game.SaveFile;
-                        var retail = (game.Format?.Id ?? "pkhex") == "pkhex";
+                        var loadedFormatId = game.Format?.Id ?? "pkhex";
+                        var retail = loadedFormatId == "pkhex";
                         var warnings = pokedex.Warnings.ToList();
                         if (recovered is not null) warnings.Add(HalfSizeEmerald.Warning);
-                        if (!game.SaveFile.ChecksumsValid)
+                        if (!save.ChecksumsValid)
                             warnings.Add("This save's checksum doesn't match. It may have been edited or damaged.");
                         result = new("ok", 1, ParserRevision,
-                            new ReaderGame(version.ToString(), versions, game.Format?.Id ?? "pkhex",
+                            new ReaderGame(version.ToString(), versions, loadedFormatId,
                                 game.Format?.Name ?? game.DetectedVersion.Name),
                             new ReaderPokedex(pokedex.Status, pokedex.Coverage!, pokedex.SpeciesNamespace!,
                                 pokedex.TrackedSpecies!.ToArray(), pokedex.SeenSpecies!.ToArray(),
                                 pokedex.CaughtSpecies!.ToArray(), warnings.ToArray()),
-                            StartDate: ReadStartDate(game.SaveFile),
+                            StartDate: ReadStartDate(save),
                             Trainer: retail && !string.IsNullOrWhiteSpace(save.OT) ? new ReaderTrainer(save.ID32, save.OT) : null,
-                            PlaySeconds: retail ? save.PlayedHours * 3600L + save.PlayedMinutes * 60 + save.PlayedSeconds : null);
+                            PlaySeconds: retail && game.Progress.PlayTime is { } time
+                                ? time.Hours * 3600L + time.Minutes * 60 + time.Seconds : null);
                     }
                 }
             }
