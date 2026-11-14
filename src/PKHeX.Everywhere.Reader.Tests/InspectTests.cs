@@ -48,11 +48,43 @@ public class InspectTests
         Assert.Equal(new[] { 25, 133 }, dex.GetProperty("caughtSpecies").EnumerateArray().Select(id => id.GetInt32()));
         if (save is SAV2 or SAV3 or SAV4 or SAV7)
             Assert.Contains(1, dex.GetProperty("seenSpecies").EnumerateArray().Select(id => id.GetInt32()));
+        Assert.Empty(dex.GetProperty("warnings").EnumerateArray());
+        Assert.True(Game.LoadFrom((byte[])bytes.Clone(), format: SaveFormats.PKHeX).SaveFile.ChecksumsValid);
         Assert.Equal(before, bytes);
         var versions = result.RootElement.GetProperty("game").GetProperty("versions").EnumerateArray().Select(item => item.GetString());
         Assert.Contains(version.ToString(), versions);
         Assert.DoesNotContain(Game.LoadFrom((byte[])bytes.Clone(), format: SaveFormats.PKHeX).Trainer.PokemonBox.All, slot => !slot.IsEmpty);
         ExportFixture(version.ToString(), bytes, json);
+    }
+
+    [Theory]
+    [InlineData(GameVersion.HG, 0x10)]
+    [InlineData(GameVersion.SS, 0x10)]
+    [InlineData(GameVersion.FR, 0x10)]
+    public void InvalidChecksumWarnsWithoutChangingPokedex(GameVersion version, int offset)
+    {
+        var save = SyntheticSave(version);
+        var pokemon = save.BlankPKM;
+        pokemon.Species = 25;
+        save.SetBoxSlotAtIndex(pokemon, 0);
+        var bytes = WriteFixture(save, version);
+        Assert.True(Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile.ChecksumsValid);
+        using var valid = JsonDocument.Parse(SaveReader.Inspect(bytes, formatId: "pkhex"));
+        bytes[offset] ^= 1;
+        var before = bytes.ToArray();
+        var loaded = Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile;
+        Assert.False(loaded.ChecksumsValid);
+        if (loaded is SAV4HGSS) Assert.Contains("Small block checksum is invalid", loaded.ChecksumInfo);
+        var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+        using var result = JsonDocument.Parse(json);
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        var dex = result.RootElement.GetProperty("pokedex");
+        foreach (var field in new[] { "status", "coverage", "speciesNamespace", "trackedSpecies", "seenSpecies", "caughtSpecies" })
+            Assert.Equal(valid.RootElement.GetProperty("pokedex").GetProperty(field).GetRawText(), dex.GetProperty(field).GetRawText());
+        Assert.Equal(new[] { "This save's checksum doesn't match. It may have been edited or damaged." },
+            dex.GetProperty("warnings").EnumerateArray().Select(warning => warning.GetString()));
+        Assert.Equal(before, bytes);
+        ExportFixture($"{version}-checksum-invalid", bytes, json);
     }
 
     [Theory]
@@ -97,6 +129,75 @@ public class InspectTests
         ExportFixture($"{version}-date-absent-{seconds}", bytes, json);
     }
 
+    [Theory]
+    [InlineData(GameVersion.C)]
+    [InlineData(GameVersion.HG)]
+    [InlineData(GameVersion.US)]
+    [InlineData(GameVersion.BD)]
+    [InlineData(GameVersion.FR)]
+    public void TrainerAndPlayTimeRoundTrip(GameVersion version)
+    {
+        var save = SyntheticSave(version);
+        if (save is SAV3FRLG frlg)
+        {
+            WriteUInt16LittleEndian(frlg.Small[0x6..], 1);
+            save = new SAV3FRLG(frlg.Write().ToArray()) { Version = version };
+        }
+        save.OT = "READER";
+        save.TID16 = 12345;
+        save.SID16 = 23456;
+        save.PlayedHours = 12;
+        save.PlayedMinutes = 34;
+        save.PlayedSeconds = 56;
+        var bytes = WriteFixture(save, version);
+        var loaded = Game.LoadFrom(bytes.ToArray(), format: SaveFormats.PKHeX).SaveFile;
+        Assert.Equal(save.ID32, loaded.ID32);
+        Assert.Equal("READER", loaded.OT);
+        Assert.Equal(12, loaded.PlayedHours);
+        Assert.Equal(34, loaded.PlayedMinutes);
+        Assert.Equal(56, loaded.PlayedSeconds);
+        var json = SaveReader.Inspect(bytes, formatId: "pkhex");
+        using var result = JsonDocument.Parse(json);
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.Equal(save.ID32, result.RootElement.GetProperty("trainer").GetProperty("id32").GetUInt32());
+        Assert.Equal("READER", result.RootElement.GetProperty("trainer").GetProperty("name").GetString());
+        Assert.Equal(45296, result.RootElement.GetProperty("playSeconds").GetInt64());
+        ExportFixture($"{version}-trainer", bytes, json);
+    }
+
+    [Fact]
+    public void BlankTrainerNameOmitsTrainer()
+    {
+        var save = SyntheticSave(GameVersion.C);
+        save.OT = "";
+        using var result = JsonDocument.Parse(SaveReader.Inspect(WriteFixture(save, GameVersion.C), formatId: "pkhex"));
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("trainer", out _));
+        Assert.Equal(0, result.RootElement.GetProperty("playSeconds").GetInt64());
+    }
+
+    [Fact]
+    public void NonRetailIdentityIsOmitted()
+    {
+        SaveFormats.Register(new IdentityFormat());
+        using var result = JsonDocument.Parse(SaveReader.Inspect([1, 2, 3], formatId: "reader-identity"));
+        Assert.Equal("ok", result.RootElement.GetProperty("status").GetString());
+        Assert.False(result.RootElement.TryGetProperty("trainer", out _));
+        Assert.False(result.RootElement.TryGetProperty("playSeconds", out _));
+    }
+
+    private sealed class IdentityFormat : ISaveFormat, IPokedexProvider
+    {
+        public string Id => "reader-identity";
+        public string Name => "Reader Identity";
+        public GameVersion BaseGame => GameVersion.C;
+        public IReadOnlySet<Capability> Capabilities { get; } = new HashSet<Capability>();
+        public SaveFormatMatch Detect(ReadOnlySpan<byte> data) => SaveFormatMatch.No;
+        public SaveFile Load(byte[] data) => BlankSaveFile.Get(GameVersion.C, "READER");
+        public PokedexSnapshot ReadPokedex(SaveFile save) =>
+            PokedexSnapshot.Available([25], [], [25], "test-dex", "partial", []);
+    }
+
     private static byte[] WriteFixture(SaveFile save, GameVersion version)
     {
         var bytes = save.Write().ToArray();
@@ -104,6 +205,7 @@ public class InspectTests
         {
             bytes[0x2866] = 0xFF;
             bytes[0x2D11] = 0xFF;
+            bytes = new SAV2(bytes, LanguageID.English, version).Write().ToArray();
         }
         if (version == GameVersion.GP)
         {
