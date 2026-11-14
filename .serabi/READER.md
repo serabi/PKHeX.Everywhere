@@ -1,6 +1,6 @@
 # Read-only save reader
 
-The implementation lives on `serabi/read-only-reader`. Upstream's editor and
+The reader lives on `main`. Upstream's editor and
 its APIs remain available. The browser reader has a separate host whose only
 JavaScript export is `ReaderExports.Inspect`.
 
@@ -147,7 +147,7 @@ have no reader providers yet and report unavailable honestly.
 
 ## Merge upstream updates
 
-Keep `main` unchanged from upstream and merge it into the implementation branch.
+Merge upstream into `main` on a branch, as described in [README.md](README.md).
 Retain the installed pre-push hook and disabled upstream push URL described in
 [README.md](README.md). Do not push upstream or publish its npm namespaces.
 

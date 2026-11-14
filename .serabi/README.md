@@ -1,17 +1,15 @@
 # Serabi fork
 
-This fork keeps upstream's application and submodule pins intact. The current
-planning branch adds a plan and Git push protection. The implementation branch,
-`serabi/read-only-reader`, adds the separate browser reader described in
-[READER.md](READER.md).
+This fork keeps upstream's application and submodule pins intact and adds the
+separate browser reader described in [READER.md](READER.md). The reader lives on
+`main`, next to upstream's code, along with Git push protection.
 
-GitHub Actions are disabled on the fork for this planning stage, so publishing
-these documents does not start upstream build or deployment workflows.
+GitHub Actions are disabled on the fork, so pushing here does not start upstream
+build or deployment workflows.
 
 - Fork: https://github.com/serabi/PKHeX.Everywhere
 - Upstream: https://github.com/arleypadua/PKHeX.Everywhere
 - Implementation plan: [PLAN.md](PLAN.md)
-- Planning branch: `serabi/read-only-import-plan`
 - Starting upstream commit: `6373c4c7de5405cdeafc72ecbe826390c4622b17`
 
 ## Push protection
@@ -21,8 +19,8 @@ The `upstream` remote fetches from the original project and has an unusable
 push URL. A pre-push hook allows only the Serabi fork's HTTPS and SSH URLs.
 It also rejects a destination named `upstream`.
 
-The installed hook lives inside Git's directory, so switching to upstream's
-unchanged `main` branch keeps the protection active. The tracked hook here
+The installed hook lives inside Git's directory, so switching branches
+keeps the protection active. The tracked hook here
 is the source copy. Reinstall it after changing that copy.
 
 These settings protect this local checkout. GitHub forks do not carry local
@@ -68,28 +66,26 @@ must exit with status 0.
 
 ## Update from upstream
 
-Keep `main` as an unchanged copy of upstream. Keep fork documentation,
+Merge upstream into `main` rather than rebasing, so reader history stays
+intact. Keep fork documentation,
 the generic API addition, the reader package, and the website integration
 in separate changes. Do not rename upstream projects or rewrite their
 existing package versions just to identify the fork.
 
-With a clean checkout, update `main` and merge it into each active branch:
+With a clean checkout, merge upstream on a branch and open a PR into `main`:
 
 ```sh
 git fetch upstream
-git switch main
-git merge --ff-only upstream/main
-git push origin main
-git switch serabi/read-only-import-plan
-git merge main
+git switch -c serabi/upstream-sync origin/main
+git merge upstream/main
 git push origin HEAD
 ```
 
-For future implementation branches, run the checks listed in the plan after
+Run the checks listed in the plan after
 each update. Record the upstream SHA and submodule pins used by each reader
 release. Keep the hook source on maintained fork branches and its installed
 copy in Git's directory.
 
 Do not publish to upstream's npm packages, deploy its sites, or open upstream
-PRs or issues as part of this planning task. Future fork releases need a
+PRs or issues from this fork. Future fork releases need a
 separate release destination and credentials.

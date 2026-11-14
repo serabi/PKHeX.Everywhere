@@ -1,52 +1,32 @@
-# PKHeX Everywhere
+# PKHeX Everywhere (Serabi fork)
 
-This repository offers 2 different ways of accessing PKHex features in any operating system: a web-based version and a terminal-based version compiled to all major operating systems (macOS, Linux and Windows).
+This is a fork of [arleypadua/PKHeX.Everywhere](https://github.com/arleypadua/PKHeX.Everywhere).
+We use it to build a small, read-only save reader for
+[Just One More Catch](https://github.com/Interactive-Buffoonery/just-one-more-catch),
+a Pokémon catch tracker.
 
-## Supported games
-PKHeX.Web and the CLI open every save [PKHeX](https://github.com/kwsch/PKHeX) supports, from Red and Blue to Scarlet and Violet.
+For the web editor, the CLI and the `@pkhex-everywhere` npm packages, head to
+upstream. That's where they're built and released. This fork is only for code used
+on justonemorecatch.app.
 
-PKHeX.Web also opens saves from these ROM hacks:
-- Pokémon Unbound
-- Pokémon Radical Red
-- Emerald Imperium
-- Pokémon Emerald Legacy
-- Pokémon Heart & Soul
+## The save reader
 
-ROM hack support is experimental. Keep a backup of your save.
+The reader opens an in-game save in the browser and reports which species it has
+marked as caught, plus a few details like the trainer name, play time and, for some
+games, the day the adventure started. It runs on [PKHeX](https://github.com/kwsch/PKHeX)
+in .NET WebAssembly, so the save never leaves the player's device. It doesn't edit or
+export saves, and it can't run plug-ins.
 
-## PKHeX.Web
-The PKHeX Web version ([pkhex-web.github.io](https://pkhex-web.github.io)) provides a user-friendly interface accessible via any web browser.
+The reader lives alongside upstream's code, which we keep as unchanged as we can so
+updates merge cleanly:
 
-![](./docs/pkhex-web-demo.gif)
+- `src/PKHeX.Everywhere.Reader`: reads a save and returns a versioned result
+- `src/PKHeX.Everywhere.Reader.Host`: the WebAssembly host, which can only inspect saves
+- `src/PKHeX.Everywhere.Reader.Sdk`: the `@serabi/pokemon-save-reader` package, built
+  as a local tarball rather than published to npm
 
-This version allows you to manage your party, pokemon box, items, and custom actions through plug-ins, like auto-legality mode, helpers for nuzlocking or live running your save file in a browser-based emulator fully integrated with the app. To learn more check the [wiki](https://github.com/arleypadua/PKHeX.Everywhere/wiki).
-
-The app is a React app ([src/PKHeX.Web.React](./src/PKHeX.Web.React)) over a .NET WebAssembly engine ([src/PKHeX.Everywhere.Engine.Host](./src/PKHeX.Everywhere.Engine.Host)). Run `npm run dev` in `src/PKHeX.Web.React` to start it locally, and `npm run build` to write the site to `dist`.
-
-## npm packages
-The engine that powers PKHeX.Web is published to npm, so you can build your own browser tools on PKHeX. Read the [documentation](https://docs.pkhex-everywhere.fyi):
-
-- [`@pkhex-everywhere/engine`](./src/PKHeX.Everywhere.Engine.Sdk/packages/engine/README.md): load, read, edit and export saves in the browser.
-- [`@pkhex-everywhere/react`](./src/PKHeX.Everywhere.Engine.Sdk/packages/react/README.md): React hooks for the engine.
-- [`@pkhex-everywhere/plugin-sdk`](./src/PKHeX.Everywhere.Engine.Sdk/packages/plugin-sdk/README.md): types for plug-in page modules.
-
-## PKHeX.CLI
-The PKHeX Command Line Interface (CLI) version allows users to interact with PKHeX via the terminal. It provides a streamlined way to use PKHeX features directly from the command line.
-
-![](./docs/pkhex-cli-demo.gif)
-
-### Installation Methods:
-1. **Curl Script**:
-   ```sh
-   curl -sL https://raw.githubusercontent.com/arleypadua/PKHeX.Everywhere/main/install.sh | sudo bash
-   ```
-2. **Homebrew**:
-   ```sh
-   brew tap arleypadua/homebrew-pkhex-cli
-   brew install pkhex-cli
-   ```
-3. For more information, refer to the documentation [here](./src/PKHeX.CLI).
+[.serabi/READER.md](.serabi/READER.md) covers building, testing and adding games.
 
 ## License
 
-GPL-3.0-or-later, matching [PKHeX.Core](https://github.com/kwsch/PKHeX), which this project links against. Code contributed before this change was released under MIT; see git history.
+GPL-3.0-or-later, matching PKHeX.Core and upstream.
